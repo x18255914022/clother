@@ -85,3 +85,18 @@ func ParseLauncher(args []string) (Options, []string) {
 	}
 	return options, forwarded
 }
+
+// ParseLauncherArgs parses launcher-specific flags from args and returns the remaining args.
+// Used when provider is passed as subcommand: clother zai --no-banner --model glm-5
+func ParseLauncherArgs(args []string) ([]string, bool) {
+	noBanner := false
+	var remaining []string
+	for _, arg := range args {
+		if arg == "--no-banner" {
+			noBanner = true
+			continue
+		}
+		remaining = append(remaining, arg)
+	}
+	return remaining, noBanner
+}
