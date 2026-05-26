@@ -47,25 +47,22 @@ func Dispatch(ctx context.Context, c Context, command string, args []string) (in
 // Handles: clother zai, clother or kimi-k25, clother custom myprovider
 func resolveProviderCommand(c Context, command string, args []string) (profiles.Target, error) {
 	profile := command
-	remaining := args
 
 	// Handle gateway commands: clother or <alias>, clother custom <name>
 	if profile == "or" {
-		if len(remaining) == 0 || strings.HasPrefix(remaining[0], "-") {
+		if len(args) == 0 || strings.HasPrefix(args[0], "-") {
 			return profiles.Target{}, fmt.Errorf("usage: clother or <alias> [args...]")
 		}
-		profile = "or-" + remaining[0]
-		remaining = remaining[1:]
+		profile = "or-" + args[0]
 	} else if profile == "custom" {
-		if len(remaining) == 0 || strings.HasPrefix(remaining[0], "-") {
+		if len(args) == 0 || strings.HasPrefix(args[0], "-") {
 			return profiles.Target{}, fmt.Errorf("usage: clother custom <provider-name> [args...]")
 		}
-		name := remaining[0]
+		name := args[0]
 		if _, ok := c.Config.CustomProviders[name]; !ok {
 			return profiles.Target{}, fmt.Errorf("unknown custom provider %q", name)
 		}
 		profile = name
-		remaining = remaining[1:]
 	}
 
 	target, err := profiles.Resolve(profile, c.Catalog, c.Config)

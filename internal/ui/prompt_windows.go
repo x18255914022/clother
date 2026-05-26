@@ -44,7 +44,7 @@ func (p *Prompter) PromptSecret(label string) (string, error) {
 		// Fallback to normal prompt if we can't hide input
 		return p.Prompt(label, "")
 	}
-	defer setConsoleMode(true)
+	defer func() { _ = setConsoleMode(true) }()
 
 	reader := bufio.NewReader(os.Stdin)
 	value, readErr := reader.ReadString('\n')

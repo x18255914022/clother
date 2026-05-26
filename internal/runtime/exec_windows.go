@@ -81,7 +81,7 @@ func runWithTemporaryPatch(ctx context.Context, claudePath string, paths config.
 	if err := patch.Apply(); err != nil {
 		return 1, true, err
 	}
-	defer patch.Restore()
+	defer func() { _ = patch.Restore() }()
 
 	code, err := runClaudeCommand(ctx, claudePath, args, env, resumeCommand)
 	return code, true, err
@@ -93,24 +93,6 @@ func forwardSignals(process *os.Process, signals <-chan os.Signal) {
 	}
 }
 
-// On Windows, syscall.Exec is not supported. Use exec.Command instead.
-func execReplace(path string, args []string, env []string) (int, error) {
-	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, path, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = env
-
-	if err := cmd.Run(); err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			return exitErr.ExitCode(), nil
-		}
-		return 1, err
-	}
-	return 0, nil
-}
 
 func runClaudeCommand(ctx context.Context, claudePath string, args []string, env []string, resumeCommand string) (int, error) {
 	before, cwd := currentProjectSession()
