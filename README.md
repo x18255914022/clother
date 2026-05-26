@@ -5,7 +5,7 @@
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" /></a>
     <a href="https://go.dev/"><img src="https://img.shields.io/badge/Language-Go-00ADD8.svg" alt="Go" /></a>
-    <a href="#platform-support"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey.svg" alt="Platform macOS and Linux" /></a>
+    <a href="#platform-support"><img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg" alt="Platform macOS, Linux, and Windows" /></a>
     <a href="https://github.com/jolehuit/clother/stargazers"><img src="https://img.shields.io/github/stars/jolehuit/clother?style=social" alt="GitHub stars" /></a>
   </p>
 </div>
@@ -20,6 +20,17 @@
 
 Switching Claude Code providers usually means changing env vars, endpoints, models, and launcher scripts by hand.
 Clother gives you one install and one command pattern across Claude, Z.AI, Kimi, Alibaba, OpenRouter, local backends, China endpoints, and many other Anthropic-compatible providers.
+
+**Two ways to launch:**
+```bash
+# Subcommand style (recommended)
+clother zai --model glm-5
+clother kimi --yolo
+
+# Legacy launcher style (still works)
+clother-zai --model glm-5
+clother-kimi --yolo
+```
 
 ## Table of Contents
 
@@ -46,11 +57,11 @@ curl -fsSL https://claude.ai/install.sh | bash
 brew tap jolehuit/tap
 brew install clother
 
-# 3. Start using it — all launchers are ready immediately
-clother-native                          # Use your Claude Pro/Max/Team subscription
-clother-zai                             # Z.AI (GLM-5)
-clother-zai --yolo                      # Skip permission prompts
-clother-kimi                            # Kimi (kimi-k2.5)
+# 3. Start using it
+clother native                          # Use your Claude Pro/Max/Team subscription
+clother zai                             # Z.AI (GLM-5)
+clother zai --yolo                      # Skip permission prompts
+clother kimi                            # Kimi (kimi-k2.5)
 clother config                          # Configure providers
 ```
 
@@ -63,6 +74,23 @@ clother update          # routes to brew upgrade under Homebrew
 brew upgrade clother
 ```
 
+### PowerShell (Windows)
+
+```powershell
+# 1. Install Claude Code CLI
+# Download from https://claude.ai/download
+
+# 2. Install Clother
+irm https://raw.githubusercontent.com/jolehuit/clother/main/scripts/install.ps1 | iex
+
+# 3. Start using it
+clother native                          # Use your Claude Pro/Max/Team subscription
+clother zai                             # Z.AI (GLM-5)
+clother zai --yolo                      # Skip permission prompts
+clother kimi                            # Kimi (kimi-k2.5)
+clother config                          # Configure providers
+```
+
 ### curl (macOS / Linux)
 
 ```bash
@@ -73,11 +101,11 @@ curl -fsSL https://claude.ai/install.sh | bash
 curl -fsSL https://raw.githubusercontent.com/jolehuit/clother/main/scripts/install.sh | bash
 
 # 3. Start using it
-clother-native                          # Use your Claude Pro/Max/Team subscription
-clother-zai                             # Z.AI (GLM-5)
-clother-zai --yolo                      # Skip permission prompts
-clother-kimi                            # Kimi (kimi-k2.5)
-clother-ollama --model qwen3-coder      # Local with Ollama
+clother native                          # Use your Claude Pro/Max/Team subscription
+clother zai                             # Z.AI (GLM-5)
+clother zai --yolo                      # Skip permission prompts
+clother kimi                            # Kimi (kimi-k2.5)
+clother ollama --model qwen3-coder      # Local with Ollama
 clother config                          # Configure providers
 ```
 
@@ -119,12 +147,13 @@ Clother keeps `claude --resume ...` working with Clother features after install.
 
 | Command | Description |
 |---------|-------------|
+| `clother <provider> [args...]` | Launch provider directly |
 | `clother config [provider]` | Configure provider |
 | `clother list` | List profiles |
 | `clother info <provider>` | Show provider details |
 | `clother test` | Test connectivity |
 | `clother status` | Installation status |
-| `clother install` | Install/update Clother (create/refresh symlinks) |
+| `clother install` | Install/update Clother |
 | `clother update` | Update to latest version |
 | `clother uninstall` | Remove everything |
 
@@ -142,7 +171,7 @@ Each provider launcher comes with a default model (for example `glm-5` for Z.AI)
 
 ```bash
 # One-time: pass --model through to Claude CLI
-clother-zai --model glm-4.7
+clother zai --model glm-4.7
 
 # Permanent: configure the provider and pick a different default
 clother config zai
@@ -158,7 +187,7 @@ After a provider-launched session, Clother also prints a provider-aware reopen
 command such as:
 
 ```bash
-clother-kimi --resume <session-id>
+clother kimi --resume <session-id>
 ```
 
 When resuming a non-Claude session into native Claude, Clother temporarily
@@ -171,25 +200,25 @@ single launch, then restores the original session file afterwards.
 
 | Command | Provider | Model | API Key |
 |---------|----------|-------|---------|
-| `clother-native` | Anthropic | Claude | Your subscription |
-| `clother-zai` | Z.AI | GLM-5 | [z.ai](https://z.ai) |
-| `clother-minimax` | MiniMax | MiniMax-M2.7 | [minimax.io](https://minimax.io) |
-| `clother-kimi` | Kimi | kimi-k2.5 | [kimi.com](https://kimi.com) |
-| `clother-moonshot` | Moonshot AI | kimi-k2.5 | [moonshot.ai](https://moonshot.ai) |
-| `clother-deepseek` | DeepSeek | deepseek-chat | [deepseek.com](https://platform.deepseek.com) |
-| `clother-mimo` | Xiaomi MiMo | mimo-v2-pro | [xiaomimimo.com](https://platform.xiaomimimo.com) |
-| `clother-alibaba` | Alibaba Coding Plan | qwen3.5-plus | [modelstudio](https://modelstudio.console.alibabacloud.com) |
-| `clother-alibaba-us` | Alibaba Coding Plan (US) | qwen3.5-plus | [modelstudio](https://modelstudio.console.alibabacloud.com) |
+| `clother native` | Anthropic | Claude | Your subscription |
+| `clother zai` | Z.AI | GLM-5 | [z.ai](https://z.ai) |
+| `clother minimax` | MiniMax | MiniMax-M2.7 | [minimax.io](https://minimax.io) |
+| `clother kimi` | Kimi | kimi-k2.5 | [kimi.com](https://kimi.com) |
+| `clother moonshot` | Moonshot AI | kimi-k2.5 | [moonshot.ai](https://moonshot.ai) |
+| `clother deepseek` | DeepSeek | deepseek-chat | [deepseek.com](https://platform.deepseek.com) |
+| `clother mimo` | Xiaomi MiMo | mimo-v2-pro | [xiaomimimo.com](https://platform.xiaomimimo.com) |
+| `clother alibaba` | Alibaba Coding Plan | qwen3.5-plus | [modelstudio](https://modelstudio.console.alibabacloud.com) |
+| `clother alibaba-us` | Alibaba Coding Plan (US) | qwen3.5-plus | [modelstudio](https://modelstudio.console.alibabacloud.com) |
 
 ### OpenRouter (100+ Models)
 
-OpenRouter launchers follow the `clother-or-<alias>` naming pattern.
-For example, if you alias `moonshotai/kimi-k2.5` to `kimi-k25`, the launcher becomes `clother-or-kimi-k25`.
+OpenRouter launchers follow the `clother or <alias>` pattern.
+For example, if you alias `moonshotai/kimi-k2.5` to `kimi-k25`:
 
 ```bash
 clother config openrouter               # Set API key + add models
 # Example: alias moonshotai/kimi-k2.5 as kimi-k25
-clother-or-kimi-k25                     # Use it
+clother or kimi-k25                     # Use it
 ```
 
 > **Tip**: Find model IDs on [openrouter.ai/models](https://openrouter.ai/models) — click the copy icon next to any model name.
@@ -200,37 +229,37 @@ clother-or-kimi-k25                     # Use it
 
 | Command | Provider | Endpoint |
 |---------|----------|----------|
-| `clother-zai-cn` | Z.AI China | open.bigmodel.cn |
-| `clother-minimax-cn` | MiniMax China | api.minimaxi.com |
-| `clother-ve` | Volcengine | ark.cn-beijing.volces.com |
-| `clother-alibaba-cn` | Alibaba China | coding.dashscope.aliyuncs.com |
+| `clother zai-cn` | Z.AI China | open.bigmodel.cn |
+| `clother minimax-cn` | MiniMax China | api.minimaxi.com |
+| `clother ve` | Volcengine | ark.cn-beijing.volces.com |
+| `clother alibaba-cn` | Alibaba China | coding.dashscope.aliyuncs.com |
 
 ### Local (No API Key)
 
 | Command | Provider | Port | Setup |
 |---------|----------|------|-------|
-| `clother-ollama` | Ollama | 11434 | [ollama.com](https://ollama.com) |
-| `clother-lmstudio` | LM Studio | 1234 | [lmstudio.ai](https://lmstudio.ai) |
-| `clother-llamacpp` | llama.cpp | 8000 | [github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) |
+| `clother ollama` | Ollama | 11434 | [ollama.com](https://ollama.com) |
+| `clother lmstudio` | LM Studio | 1234 | [lmstudio.ai](https://lmstudio.ai) |
+| `clother llamacpp` | llama.cpp | 8000 | [github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) |
 
 ```bash
 # Ollama
 ollama pull qwen3-coder && ollama serve
-clother-ollama --model qwen3-coder
+clother ollama --model qwen3-coder
 
 # LM Studio
-clother-lmstudio --model <model>
+clother lmstudio --model <model>
 
 # llama.cpp
 ./llama-server --model model.gguf --port 8000 --jinja
-clother-llamacpp --model <model>
+clother llamacpp --model <model>
 ```
 
 ### Custom
 
 ```bash
 clother config custom
-clother-myprovider                      # Ready
+clother custom myprovider               # Ready
 ```
 
 ### Alibaba Coding Plan Models
@@ -251,9 +280,9 @@ All Alibaba variants (`alibaba`, `alibaba-us`, `alibaba-cn`) share the same API 
 Switch models with `--model`:
 
 ```bash
-clother-alibaba --model kimi-k2.5
-clother-alibaba --model glm-5
-clother-alibaba-cn --model qwen3-coder-next
+clother alibaba --model kimi-k2.5
+clother alibaba --model glm-5
+clother alibaba-cn --model qwen3-coder-next
 ```
 
 ## Troubleshooting
@@ -284,7 +313,7 @@ To configure it:
 
 ## Platform Support
 
-macOS (zsh/bash) • Linux (zsh/bash) • Windows (WSL)
+macOS (zsh/bash) • Linux (zsh/bash) • Windows (native + WSL)
 
 ## Under the Hood
 
@@ -292,15 +321,15 @@ macOS (zsh/bash) • Linux (zsh/bash) • Windows (WSL)
 
 Clother is a single Go binary. The installer downloads the release artifact,
 installs `clother` into your bin directory, then creates:
-- `clother-*` symlinks for providers
-- a `claude` shim symlink for resume compatibility
+- `clother-*` launcher scripts for providers (symlinks on Unix, `.bat` on Windows)
+- a `claude` shim for resume compatibility
 
-At runtime, the binary resolves the selected profile from its own invocation
-name, loads config and secrets, sets the required Anthropic-compatible
-environment variables, then launches the real Claude binary outside the Clother
-bin directory.
+At runtime, the binary resolves the selected profile from the subcommand or
+its own invocation name, loads config and secrets, sets the required
+Anthropic-compatible environment variables, then launches the real Claude
+binary outside the Clother bin directory.
 
-Example for `clother-zai`:
+Example for `clother zai`:
 
 ```bash
 export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
@@ -308,7 +337,9 @@ export ANTHROPIC_AUTH_TOKEN="$ZAI_API_KEY"
 exec /path/to/the/real/claude "$@"
 ```
 
-API keys stored in `~/.local/share/clother/secrets.env` (chmod 600).
+API keys stored in:
+- Unix: `~/.local/share/clother/secrets.env` (chmod 600)
+- Windows: `%LOCALAPPDATA%\clother\secrets.env`
 
 `--yolo` is accepted by Clother launchers and by the Clother `claude` shim as
 shorthand for `--dangerously-skip-permissions`.
