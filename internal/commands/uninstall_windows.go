@@ -21,9 +21,13 @@ func runUninstall(_ context.Context, c Context) (int, error) {
 	}
 	manifest, _ := launchers.LoadManifest(c.Paths.ManifestFile)
 	for _, name := range manifest.Launchers {
+		// Remove .bat files on Windows
+		_ = os.Remove(filepath.Join(c.Paths.BinDir, name+".bat"))
 		_ = os.Remove(filepath.Join(c.Paths.BinDir, name))
 	}
+	_ = os.Remove(filepath.Join(c.Paths.BinDir, "claude.bat"))
 	_ = os.Remove(filepath.Join(c.Paths.BinDir, "claude"))
+	_ = os.Remove(filepath.Join(c.Paths.BinDir, "clother.exe"))
 	_ = os.Remove(filepath.Join(c.Paths.BinDir, "clother"))
 	_ = os.RemoveAll(c.Paths.ConfigDir)
 	_ = os.RemoveAll(c.Paths.DataDir)

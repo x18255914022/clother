@@ -4,17 +4,12 @@ import (
 	"context"
 	"os"
 	"os/exec"
-
-	"github.com/jolehuit/clother/internal/runtime"
 )
 
 func runUpdate(ctx context.Context, c Context) (int, error) {
-	if runtime.IsHomebrew() {
-		brew, err := exec.LookPath("brew")
-		if err != nil {
-			return 1, err
-		}
-		cmd := exec.CommandContext(ctx, brew, "upgrade", "clother")
+	// On Windows, try winget first, then fall back to reinstall
+	if winget, err := exec.LookPath("winget"); err == nil {
+		cmd := exec.CommandContext(ctx, winget, "upgrade", "jolehuit.clother")
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -26,5 +21,7 @@ func runUpdate(ctx context.Context, c Context) (int, error) {
 		}
 		return 0, nil
 	}
+
+	// Fallback: just run install which will download the latest
 	return runInstall(ctx, c)
 }

@@ -79,7 +79,7 @@ func SaveSecrets(path string, secrets Secrets) error {
 	if err := writeAtomic(path, buf.Bytes(), 0o600); err != nil {
 		return err
 	}
-	return os.Chmod(path, 0o600)
+	return setFilePermissions(path, 0o600)
 }
 
 func NormalizeLegacySecrets(secrets Secrets, catalog providers.Catalog) {

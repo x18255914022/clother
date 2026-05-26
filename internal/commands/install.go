@@ -69,7 +69,7 @@ func runInstall(ctx context.Context, c Context) (int, error) {
 	}
 	c.Output.Success("installed Clother %s to %s", installedVersion, c.Paths.BinDir)
 	if !pathContainsDir(os.Getenv("PATH"), c.Paths.BinDir) {
-		c.Output.Warn("%s is not on PATH; add `export PATH=\"%s:$PATH\"` to your shell profile and restart your shell", c.Paths.BinDir, c.Paths.BinDir)
+		c.Output.Warn("%s is not on PATH; %s", c.Paths.BinDir, pathHint(c.Paths.BinDir))
 	}
 	return 0, nil
 }

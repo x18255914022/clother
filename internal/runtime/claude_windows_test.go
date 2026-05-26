@@ -18,11 +18,12 @@ func TestFindRealClaudeCanUseSameBinDir(t *testing.T) {
 	if err := os.MkdirAll(realDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(binDir, "claude"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, create claude.exe
+	if err := os.WriteFile(filepath.Join(binDir, "claude.exe"), []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	realClaude := filepath.Join(realDir, "claude")
-	if err := os.WriteFile(realClaude, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	realClaude := filepath.Join(realDir, "claude.exe")
+	if err := os.WriteFile(realClaude, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -36,32 +37,29 @@ func TestFindRealClaudeCanUseSameBinDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != filepath.Join(binDir, "claude") {
-		t.Fatalf("FindRealClaude() = %q, want %q", got, filepath.Join(binDir, "claude"))
+	if got != filepath.Join(binDir, "claude.exe") {
+		t.Fatalf("FindRealClaude() = %q, want %q", got, filepath.Join(binDir, "claude.exe"))
 	}
 }
 
 func TestFindRealClaudeSkipsSelfAndFallsBack(t *testing.T) {
+	// On Windows, symlinks require elevated privileges, so we test the fallback
+	// path by ensuring that when no claude is in PATH, the fallback is used.
 	root := t.TempDir()
 	binDir := filepath.Join(root, "bin")
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	self, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(self, filepath.Join(binDir, "claude")); err != nil {
-		t.Fatal(err)
-	}
-	realFallback := filepath.Join(binDir, "claude-real")
-	if err := os.WriteFile(realFallback, []byte("#!/bin/sh\n"), 0o755); err != nil {
+
+	realFallback := filepath.Join(binDir, "claude-real.exe")
+	if err := os.WriteFile(realFallback, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
+	// Set PATH to empty so no claude is found
 	oldPath := os.Getenv("PATH")
 	t.Cleanup(func() { _ = os.Setenv("PATH", oldPath) })
-	if err := os.Setenv("PATH", binDir); err != nil {
+	if err := os.Setenv("PATH", ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,7 +78,7 @@ func TestPreserveRealClaudeMovesClaudeToClaudeReal(t *testing.T) {
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	claudePath := filepath.Join(binDir, "claude")
+	claudePath := filepath.Join(binDir, "claude.exe")
 	content := []byte("real-claude-binary")
 	if err := os.WriteFile(claudePath, content, 0o755); err != nil {
 		t.Fatal(err)
@@ -92,7 +90,7 @@ func TestPreserveRealClaudeMovesClaudeToClaudeReal(t *testing.T) {
 	if _, err := os.Stat(claudePath); !os.IsNotExist(err) {
 		t.Fatalf("expected %s to be moved, stat err=%v", claudePath, err)
 	}
-	preserved := filepath.Join(binDir, "claude-real")
+	preserved := filepath.Join(binDir, "claude-real.exe")
 	got, err := os.ReadFile(preserved)
 	if err != nil {
 		t.Fatal(err)

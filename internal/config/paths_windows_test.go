@@ -14,14 +14,14 @@ func TestDetectPrefersClaudeDirWhenNotOverridden(t *testing.T) {
 	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(claudeDir, "claude"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, look for claude.exe
+	if err := os.WriteFile(filepath.Join(claudeDir, "claude.exe"), []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("PATH", claudeDir)
 	t.Setenv("CLOTHER_BIN", "")
 
@@ -43,14 +43,14 @@ func TestDetectPrefersCLOTHERBINOverClaudeDir(t *testing.T) {
 	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(claudeDir, "claude"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, look for claude.exe
+	if err := os.WriteFile(filepath.Join(claudeDir, "claude.exe"), []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("PATH", claudeDir)
 	t.Setenv("CLOTHER_BIN", overrideDir)
 
@@ -73,14 +73,14 @@ func TestDetectPrefersExplicitFlagOverEnvAndClaudeDir(t *testing.T) {
 	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(claudeDir, "claude"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+	// On Windows, look for claude.exe
+	if err := os.WriteFile(filepath.Join(claudeDir, "claude.exe"), []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
-	t.Setenv("HOME", home)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
-	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
 	t.Setenv("PATH", claudeDir)
 	t.Setenv("CLOTHER_BIN", envDir)
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"runtime"
 	"strings"
+	"syscall"
+	"unsafe"
 )
 
 type Prompter struct {
@@ -38,21 +38,17 @@ func (p *Prompter) Prompt(label, defaultValue string) (string, error) {
 }
 
 func (p *Prompter) PromptSecret(label string) (string, error) {
-	tty, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
-	if err != nil {
+	fmt.Fprintf(p.Out, "%s: ", label)
+
+	if err := setConsoleMode(false); err != nil {
+		// Fallback to normal prompt if we can't hide input
 		return p.Prompt(label, "")
 	}
-	defer tty.Close()
+	defer setConsoleMode(true)
 
-	fmt.Fprintf(tty, "%s: ", label)
-	if err := setTTYEcho(false); err != nil {
-		return p.Prompt(label, "")
-	}
-	defer setTTYEcho(true)
-
-	reader := bufio.NewReader(tty)
+	reader := bufio.NewReader(os.Stdin)
 	value, readErr := reader.ReadString('\n')
-	fmt.Fprintln(tty)
+	fmt.Fprintln(p.Out)
 	if readErr != nil && readErr != io.EOF {
 		return "", readErr
 	}
@@ -75,22 +71,37 @@ func (p *Prompter) Confirm(label string, defaultYes bool) (bool, error) {
 	return strings.HasPrefix(answer, "y"), nil
 }
 
-func setTTYEcho(enabled bool) error {
-	args := []string{}
-	switch runtime.GOOS {
-	case "darwin", "freebsd":
-		args = append(args, "-f", "/dev/tty")
-	default:
-		args = append(args, "-F", "/dev/tty")
+var (
+	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	procGetConsoleMode      = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode      = kernel32.NewProc("SetConsoleMode")
+	ENABLE_ECHO_INPUT       = 0x0004
+	ENABLE_LINE_INPUT       = 0x0002
+	getStdHandle            = kernel32.NewProc("GetStdHandle")
+	STD_INPUT_HANDLE        = -10
+)
+
+func setConsoleMode(echo bool) error {
+	handle, _, _ := getStdHandle.Call(uintptr(STD_INPUT_HANDLE))
+	if handle == 0 {
+		return fmt.Errorf("failed to get console handle")
 	}
-	if enabled {
-		args = append(args, "echo")
+
+	var mode uint32
+	r, _, _ := procGetConsoleMode.Call(handle, uintptr(unsafe.Pointer(&mode)))
+	if r == 0 {
+		return fmt.Errorf("failed to get console mode")
+	}
+
+	if echo {
+		mode |= uint32(ENABLE_ECHO_INPUT) | uint32(ENABLE_LINE_INPUT)
 	} else {
-		args = append(args, "-echo")
+		mode &^= uint32(ENABLE_ECHO_INPUT)
 	}
-	cmd := exec.Command("stty", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = io.Discard
-	cmd.Stderr = io.Discard
-	return cmd.Run()
+
+	r, _, _ = procSetConsoleMode.Call(handle, uintptr(mode))
+	if r == 0 {
+		return fmt.Errorf("failed to set console mode")
+	}
+	return nil
 }

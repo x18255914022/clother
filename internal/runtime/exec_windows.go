@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/jolehuit/clother/internal/config"
@@ -90,15 +89,24 @@ func runWithTemporaryPatch(ctx context.Context, claudePath string, paths config.
 
 func forwardSignals(process *os.Process, signals <-chan os.Signal) {
 	for sig := range signals {
-		if signalValue, ok := sig.(syscall.Signal); ok {
-			_ = process.Signal(signalValue)
-		}
+		_ = process.Signal(sig)
 	}
 }
 
+// On Windows, syscall.Exec is not supported. Use exec.Command instead.
 func execReplace(path string, args []string, env []string) (int, error) {
-	argv := append([]string{"claude"}, args...)
-	if err := syscall.Exec(path, argv, env); err != nil {
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, path, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = env
+
+	if err := cmd.Run(); err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return exitErr.ExitCode(), nil
+		}
 		return 1, err
 	}
 	return 0, nil

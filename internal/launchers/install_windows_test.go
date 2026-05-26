@@ -3,6 +3,7 @@ package launchers
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jolehuit/clother/internal/config"
@@ -13,8 +14,8 @@ func TestSyncCreatesBinaryAndLaunchers(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	execPath := filepath.Join(root, "clother-bin")
-	if err := os.WriteFile(execPath, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	execPath := filepath.Join(root, "clother-bin.exe")
+	if err := os.WriteFile(execPath, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,31 +48,31 @@ func TestSyncCreatesBinaryAndLaunchers(t *testing.T) {
 	if err := Sync(execPath, paths, catalog, cfg, false); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"clother", "claude", "clother-zai", "clother-native", "clother-or-kimi", "clother-myprovider", "clother-or", "clother-custom"} {
-		if _, err := os.Lstat(filepath.Join(paths.BinDir, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
+
+	// Check that .bat files are created for providers
+	for _, name := range []string{"clother-zai", "clother-native", "clother-or-kimi", "clother-myprovider", "clother-or", "clother-custom", "claude"} {
+		batPath := filepath.Join(paths.BinDir, name+".bat")
+		if _, err := os.Stat(batPath); err != nil {
+			t.Fatalf("missing %s.bat: %v", name, err)
 		}
 	}
-	// binary must be a regular file (copied), not a symlink
-	info, err := os.Lstat(filepath.Join(paths.BinDir, "clother"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		t.Fatal("clother should be a regular file in normal mode, not a symlink")
+
+	// Check that clother.exe is copied
+	if _, err := os.Stat(filepath.Join(paths.BinDir, "clother.exe")); err != nil {
+		t.Fatal("clother.exe should be copied in normal mode")
 	}
 }
 
-func TestSyncHomebrewSkipsCopyAndUsesAbsoluteSymlinks(t *testing.T) {
+func TestSyncHomebrewSkipsCopyAndUsesAbsolutePaths(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
 	// Simulate the Homebrew-managed binary (not in BinDir)
-	homebrewBin := filepath.Join(root, "homebrew", "bin", "clother")
+	homebrewBin := filepath.Join(root, "homebrew", "bin", "clother.exe")
 	if err := os.MkdirAll(filepath.Dir(homebrewBin), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(homebrewBin, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	if err := os.WriteFile(homebrewBin, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,32 +100,32 @@ func TestSyncHomebrewSkipsCopyAndUsesAbsoluteSymlinks(t *testing.T) {
 	}
 
 	// clother binary must NOT be copied into BinDir
-	if _, err := os.Lstat(filepath.Join(paths.BinDir, "clother")); err == nil {
-		t.Fatal("clother binary must not be copied into BinDir in Homebrew mode")
+	if _, err := os.Stat(filepath.Join(paths.BinDir, "clother.exe")); err == nil {
+		t.Fatal("clother.exe must not be copied into BinDir in Homebrew mode")
 	}
 
-	// provider symlinks must exist and point to the Homebrew binary
+	// provider .bat files must exist and contain the Homebrew binary path
 	for _, name := range []string{"claude", "clother-zai", "clother-native", "clother-or", "clother-custom"} {
-		link := filepath.Join(paths.BinDir, name)
-		target, err := os.Readlink(link)
+		batPath := filepath.Join(paths.BinDir, name+".bat")
+		content, err := os.ReadFile(batPath)
 		if err != nil {
-			t.Fatalf("missing symlink %s: %v", name, err)
+			t.Fatalf("missing %s.bat: %v", name, err)
 		}
-		if target != homebrewBin {
-			t.Fatalf("%s symlink target = %q, want %q", name, target, homebrewBin)
+		if !strings.Contains(string(content), homebrewBin) {
+			t.Fatalf("%s.bat should contain Homebrew binary path %q", name, homebrewBin)
 		}
 	}
 }
 
-func TestSyncHomebrewSkipsDynamicProviderSymlinks(t *testing.T) {
+func TestSyncHomebrewSkipsDynamicProviderLaunchers(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	homebrewBin := filepath.Join(root, "homebrew", "bin", "clother")
+	homebrewBin := filepath.Join(root, "homebrew", "bin", "clother.exe")
 	if err := os.MkdirAll(filepath.Dir(homebrewBin), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(homebrewBin, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	if err := os.WriteFile(homebrewBin, []byte("fake binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -153,17 +154,19 @@ func TestSyncHomebrewSkipsDynamicProviderSymlinks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// individual dynamic symlinks must NOT be created under Homebrew
+	// individual dynamic .bat files must NOT be created under Homebrew
 	for _, name := range []string{"clother-or-kimi", "clother-myprovider"} {
-		if _, err := os.Lstat(filepath.Join(paths.BinDir, name)); err == nil {
-			t.Fatalf("%s must not be created in Homebrew mode", name)
+		batPath := filepath.Join(paths.BinDir, name+".bat")
+		if _, err := os.Stat(batPath); err == nil {
+			t.Fatalf("%s.bat must not be created in Homebrew mode", name)
 		}
 	}
 
-	// gateway symlinks must always be present
+	// gateway .bat files must always be present
 	for _, name := range []string{"clother-or", "clother-custom"} {
-		if _, err := os.Lstat(filepath.Join(paths.BinDir, name)); err != nil {
-			t.Fatalf("gateway symlink %s must always be created: %v", name, err)
+		batPath := filepath.Join(paths.BinDir, name+".bat")
+		if _, err := os.Stat(batPath); err != nil {
+			t.Fatalf("gateway %s.bat must always be created: %v", name, err)
 		}
 	}
 }
