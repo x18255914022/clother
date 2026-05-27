@@ -118,20 +118,9 @@ function Install-Clother {
 
         foreach ($provider in $providers) {
             $batPath = Join-Path $INSTALL_DIR "clother-${provider}.bat"
-            $batContent = @"
-@echo off
-"$destBinary" $provider %*
-"@
+            $batContent = "@echo off" + [Environment]::NewLine + "`"$destBinary`" $provider %*"
             Set-Content -Path $batPath -Value $batContent -Encoding ASCII
         }
-
-        # Create claude shim
-        $claudeShim = Join-Path $INSTALL_DIR "claude.bat"
-        $claudeContent = @"
-@echo off
-"$destBinary" shim %*
-"@
-        Set-Content -Path $claudeShim -Value $claudeContent -Encoding ASCII
 
         Write-Success "Created provider launchers"
 
@@ -153,10 +142,13 @@ function Install-Clother {
         Write-Success "Installation complete!"
         Write-Host ""
         Write-Host "Usage:"
-        Write-Host "  clother-native          # Use your Claude Pro/Max/Team subscription"
-        Write-Host "  clother-zai             # Z.AI (GLM-5)"
-        Write-Host "  clother-kimi            # Kimi (kimi-k2.5)"
+        Write-Host "  clother native          # Use your Claude Pro/Max/Team subscription"
+        Write-Host "  clother zai             # Z.AI (GLM-5)"
+        Write-Host "  clother kimi            # Kimi (kimi-k2.5)"
         Write-Host "  clother config          # Configure providers"
+        Write-Host ""
+        Write-Host "Legacy launcher style also works:"
+        Write-Host "  clother-zai             # Same as: clother zai"
         Write-Host ""
 
     } finally {
