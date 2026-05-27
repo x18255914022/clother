@@ -81,7 +81,8 @@ function Install-Clother {
     $downloadUrl = "https://github.com/$REPO/releases/download/v${version}/${filename}"
 
     # Create temp directory
-    $tempDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "clother-install-*") -Force
+    $tempDirName = "clother-install-" + [System.IO.Path]::GetRandomFileName()
+    $tempDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP $tempDirName) -Force
 
     try {
         # Download
